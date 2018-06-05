@@ -6,12 +6,19 @@ __lua__
 --globals-----------------------
 
 function _init()
+	--gravity = how many pixels per
+	--frame should our y velocity 
+	--decrease when falling
 	gravity=.2
-	stopspeed=.5
 
+	--speed of our animation
+	--loops, used in player.effects
 	runanimspeed=.12
 	wallrunanimspeed=.2
 
+	--delta time multiplier, 
+	--essentially controls the
+	--speed of the game
 	dt=.5
 
 	--game length timer
@@ -422,7 +429,7 @@ player.effects=function(p)
 		if abs(p.vx)<.3 then
 			p.runtimer=0
 		else
-			p.runtimer+=abs(p.vx)*0.12
+			p.runtimer+=abs(p.vx)*runanimspeed
 		end
 
 		--update the "landed" timer
@@ -431,7 +438,7 @@ player.effects=function(p)
 			p.landtimer-=0.4
 		end
 	elseif p.wallsliding then
-		p.runtimer-=p.vy*0.12
+		p.runtimer-=p.vy*wallrunanimspeed
 	end
 end --player.effects
 
