@@ -211,7 +211,6 @@ player.draw=function(p)
 			p.spr=64+p.runtimer%3
 		end
 	elseif p.wallsliding	then
-		p.flipx=(p.wallfacing==1)
 		p.spr=96+flr(player.runtimer%4)
 	else
 	--jumping
