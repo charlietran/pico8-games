@@ -46,7 +46,14 @@ end
 function _draw()
 	--clear screen, reset camera
 	cls()
-	camera(0,0)
+
+	--center camera on player
+	--camera(player.x,player.y)
+	--puts the camera top-left
+	--origin at the player origin,
+	--then we offset by half a
+	--screen in both directions
+	camera(player.x-64,player.y-64)
 
 	--debug
 	debugrow=0
