@@ -129,7 +129,7 @@ function collide(agent,axis,v,nearonly)
 		return true
 	end
 
- --if not nearonly, check if
+	--if not nearonly, check if
 	--either corner will hit a wall
 	if not nearonly and
 		(iswall(tile1) or 
@@ -138,10 +138,10 @@ function collide(agent,axis,v,nearonly)
 		return true
 	end
 
- --now check if we will hit any
+	--now check if we will hit any
 	--moving platforms
-\t
- -- no hits detected
+
+	-- no hits detected
 	return false
 end
 
@@ -186,9 +186,6 @@ player.spr=64
 player.draw=function(p)
 	local xoff=p.wr
 	local yoff=p.hr
-	if p.flipx then
-		xoff=p.w*2
-	end
 
 	--sprite numbers:
 	--64 standing
@@ -229,8 +226,8 @@ player.draw=function(p)
 		p.spr, --sprite
 		p.x-xoff, --x pos
 		p.y-yoff, --y pos
-		1, --width
-		1, -- height
+		0.375, --width, .375*8=3px
+		0.625, -- height, .625*8=5px
 		p.flipx -- flip x
 	)
 end
@@ -400,8 +397,6 @@ player.movejump=function(p)
 		--(looking away from wall)
 		p.vx=p.wallfacing*2
 		p.flipx=(p.wallfacing==-1)
-
-		p.wallsliding=false
 
 		sfx(9)
 	end
