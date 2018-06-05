@@ -237,6 +237,7 @@ player.update=function(p)
 	--move the player, x then y
 	p:movex()
 	p:movey()
+	p:movejump()
 	p:checksliding()
 	p:handleinput()
 	p:effects()
@@ -278,8 +279,32 @@ player.jumpinput=function(p)
 		p.hit_jump=false
 	end
 	p.is_jumping=jump_pressed
-	p:movejump()
-end
+end --player.jumpinput
+
+player.movejump=function(p)
+	--if standing, or if only just
+	--started falling, then jump
+	if(not p.hit_jump) return false
+	if p.standing then
+		p.vy=min(p.vy,-3)
+	elseif p.wallsliding then
+	-- allow walljump if sliding
+		--use normal jump speed,
+		--but proportionate to how 
+		--fast player is currently
+		--sliding down wall
+		p.vy-=3
+		p.vy=mid(p.vy,-1,-3)
+
+		--set x velocity / direction
+		--based on wall facing
+		--(looking away from wall)
+		p.vx=p.wallfacing*2
+		p.flipx=(p.wallfacing==-1)
+
+		sfx(9)
+	end
+end --player.movejump
 
 player.groundinput=function(p)
 	if btn(0) then
@@ -298,7 +323,7 @@ player.groundinput=function(p)
 	--pressing neither, slow down
 		p.vx*=.88
 	end
-end
+end --player.groundinput
 
 player.airinput=function(p)
 	if btn(0) then
@@ -306,7 +331,7 @@ player.airinput=function(p)
 	elseif btn(1) then
 		p.vx+=0.15*dt
 	end
-end
+end --player.airinput
 
 player.movex=function(p)
 	--xsteps is the number of
@@ -336,8 +361,7 @@ player.movex=function(p)
 		end	
 
 	end
-
-end
+end --player.movex
 
 player.movey=function(p)
 	--always apply gravity 
@@ -378,32 +402,7 @@ player.movey=function(p)
 			p.falltimer+=1
 		end
 	end
-end
-
-player.movejump=function(p)
-	--if standing, or if only just
-	--started falling, then jump
-	if(not p.hit_jump) return false
-	if p.standing then
-		p.vy=min(p.vy,-3)
-	elseif p.wallsliding then
-	-- allow walljump if sliding
-		--use normal jump speed,
-		--but proportionate to how 
-		--fast player is currently
-		--sliding down wall
-		p.vy-=3
-		p.vy=mid(p.vy,-1,-3)
-
-		--set x velocity / direction
-		--based on wall facing
-		--(looking away from wall)
-		p.vx=p.wallfacing*2
-		p.flipx=(p.wallfacing==-1)
-
-		sfx(9)
-	end
-end
+end --player.movey
 
 player.effects=function(p)
 	if p.standing then
@@ -423,7 +422,7 @@ player.effects=function(p)
 	elseif p.wallsliding then
 		p.runtimer-=p.vy*0.12
 	end
-end
+end --player.effects
 
 __gfx__
 000000001555555144444444cd1d1d1c444444444444444444444444444444440505505000000000000000000000000000000000000000000000000000000000
