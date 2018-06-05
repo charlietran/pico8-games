@@ -265,6 +265,10 @@ player.handleinput=function(p)
 		p:airinput()
 	end
 	p:jumpinput()
+
+	--overall x speed tweak to
+	--make things feel right
+	p.vx*=0.98
 end
 
 player.jumpinput=function(p)
