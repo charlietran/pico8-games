@@ -41,18 +41,29 @@ function _draw()
 	cls()
 	camera(0,0)
 
+	--debug
+	debugrow=0
+	debugprint("x velocity: " .. player.vx)
+	debugprint("y velocity: " .. player.vy)
+	debugprint("run timer: " .. player.runtimer)
+	debugprint("sprite: " .. player.spr)
+	debugprint("land timer: " .. abs(player.landtimer))
+	debugprint("fall timer: " .. player.falltimer)
+
 	--draw the map
 	map(0,0,0,0,128,128)
 
 	player:draw()
 
-	--debug
-	print("player.vx: " .. player.vx, 64,127-6*6)
-	print("player.vy: " .. player.vy, 64,127-6*5)
-	print("runtimer: " .. player.runtimer, 64,127-6*4)
-	print("sprite: " .. player.spr, 64,127-6*3)
-	print("landtimer: " .. player.landtimer, 64,127-6*2)
-	print("falltimer: " .. player.falltimer, 64,127-6*1)
+end
+
+function debugprint(text)
+	print(
+		text, 
+		32, --x
+		12+debugrow*6, --y
+		9) --color
+	debugrow+=1
 end
 -->8
 --collision code
