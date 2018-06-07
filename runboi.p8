@@ -28,7 +28,7 @@ function _init()
 	--game length timer
 	gametime=0
 
-	gamestate="game"
+	gamestate="intro"
 
 	-- camera shake values
 	shakex=0
@@ -49,21 +49,32 @@ function _init()
 end
 
 function _update60()
-	for object in all(objects) do
-		object:update()
+	if gamestate=="game" then
+		for object in all(objects) do
+			object:update()
+		end
+	elseif gamestate=="intro" then
+		intro:update()
 	end
 end
 
 function _draw()
-	--clear screen, reset camera
 	cls()
 
+	if gamestate=="game" then
+		_drawgame()
+	elseif gamestate=="intro" then
+		intro:draw()
+	end
+end
+
+function _drawgame()
 	--reset camera
 	camera(0,0)
 
 	-- debug=true
-	debugrow=0
 	if debug then
+		debugrow=0
 		-- debugprint("x velocity: " .. player.vx)
 		-- debugprint("y velocity: " .. player.vy)
 		debugprint("run timer: " .. player.runtimer)
@@ -631,6 +642,43 @@ specks.draw=function(this)
 		)
 	end
 end
+
+
+--------------------------------
+-->8
+--intro object------------------
+intro={}
+intro.t=0
+intro.r=2
+intro.draw=function()
+	intro.t+=2/360
+	if(intro.t>1)intro.t=0
+	for i=10,7,-1 do
+		print(
+			"flamehead", 
+			52 + intro.r * i*sin(intro.t), 
+			48 + intro.r * i*cos(intro.t), 
+			i
+		)
+	end
+
+	print(
+		"press ❎ to start",
+		32,
+		90,
+		7
+	)
+
+end
+
+intro.update=function()
+	if btnp(4) or btnp(5) then
+		gamestate="game"
+	end
+end
+
+
+
 
 __gfx__
 000000001555555144444444cd1d1d1c444444444444444444444444444444440505505000000000000000000000000000000000000000000000000000000000
