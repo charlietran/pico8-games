@@ -58,22 +58,19 @@ function _draw()
 	--clear screen, reset camera
 	cls()
 
-	--center camera on player
-	--camera(player.x,player.y)
-	--puts the camera top-left
-	--origin at the player origin,
-	--then we offset by half a
-	--screen in both directions
-	camera(player.x-64,player.y-64)
-
+	--reset camera
+	camera(0,0)
 	--debug
+	debug=false
 	debugrow=0
-	debugprint("x velocity: " .. player.vx)
-	debugprint("y velocity: " .. player.vy)
-	debugprint("run timer: " .. player.runtimer)
-	debugprint("sprite: " .. player.spr)
-	debugprint("land timer: " .. abs(player.landtimer))
-	debugprint("fall timer: " .. player.falltimer)
+	if debug then
+		debugprint("x velocity: " .. player.vx)
+		debugprint("y velocity: " .. player.vy)
+		debugprint("run timer: " .. player.runtimer)
+		debugprint("sprite: " .. player.spr)
+		debugprint("land timer: " .. abs(player.landtimer))
+		debugprint("fall timer: " .. player.falltimer)
+	end
 
 	--draw the map
 	map(0,0,0,0,128,128)
