@@ -162,6 +162,10 @@ player.draw=function(p)
 		end
 	end
 
+	--flicker the flame head
+	if t()%0.5<0.25 then
+		pal(9,8)
+	end
 	spr(
 		p.spr, --sprite
 		p.x-xoff, --x pos
@@ -170,6 +174,7 @@ player.draw=function(p)
 		0.625, -- height, .625*8=5px
 		p.flipx -- flip x
 	)
+	pal()
 end
 
 player.update=function(p)
