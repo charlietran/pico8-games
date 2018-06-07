@@ -121,44 +121,47 @@ player.wr=1
 player.hr=2
 player.w=3
 player.h=5
-player.x=2 *8
-player.y=7 *8
---player's velocity
-player.vx=0
-player.vy=0
 
 player.hit_jump=false
+
+--instantaneous jump velocity
+--the "power" of the jump
 player.jumpv=3
 
 --movement states
 player.standing=false
 player.wallsliding=false
-player.wallfacing=0
 
+--what direction we're facing
+--1 or -1, used when we're 
+--facing away from a wall
+--while sliding
+player.facing=0
+
+--timers used for animation
+--states and particle fx
 player.falltimer=0
 player.landtimer=0
 player.runtimer=0
-
---draw the player as white
-player.col=7
+player.headanimtimer=0
 
 player.spr=64
+--sprite numbers------
+--64 standing
+--65 running 1
+--66 running 2
+--67	crouching (post landing)
+--80 jumping
+--81 falling
+--96 sliding 1
+--97 sliding 2
+--98 sliding 3 / hanging
+--99 sliding 4
 
 player.draw=function(p)
+	p.headanimtimer=p.headanimtimer%3+1
 	local xoff=p.wr
 	local yoff=p.hr
-
-	--sprite numbers:
-	--64 standing
-	--65 running 1
-	--66 running 2
-	--67	crouching (post landing)
-	--80 jumping
-	--81 falling
-	--96 sliding 1
-	--97 sliding 2
-	--98 sliding 3 / hanging
-	--99 sliding 4
 
 	if p.standing then
 		if p.landtimer>0 then
@@ -183,9 +186,7 @@ player.draw=function(p)
 	end
 
 	--flicker the flame head
-	if t()%0.5<0.25 then
-		pal(9,8)
-	end
+	pal(9,9-(p.etimer<4 and 1 or 0))
 	spr(
 		p.spr, --sprite
 		p.x-xoff, --x pos
@@ -201,11 +202,11 @@ player.update=function(p)
 	p.standing=p.falltimer<7
 	p.moving=nil
 	--move the player, x then y
+	p:handleinput()
 	p:movex()
 	p:movey()
 	p:movejump()
 	p:checksliding()
-	p:handleinput()
 	p:effects()
 end
 
@@ -214,12 +215,12 @@ player.checksliding=function(p)
 	--hanging on wall to the right?
 	if collide(p,'x',1) then
 		p.wallsliding=true
-		p.wallfacing=-1
+		p.facing=-1
 		if(p.vy>0) p.vy*=.97
 	--hanging on wall to the left?
 	elseif collide(p,'x',-1) then
 		p.wallsliding=true
-		p.wallfacing=1
+		p.facing=1
 		if(p.vy>0) p.vy*=.97
 	end
 end
@@ -265,8 +266,8 @@ player.movejump=function(p)
 		--set x velocity / direction
 		--based on wall facing
 		--(looking away from wall)
-		p.vx=p.wallfacing*2
-		p.flipx=(p.wallfacing==-1)
+		p.vx=p.facing*2
+		p.flipx=(p.facing==-1)
 
 		sfx(9)
 	end
