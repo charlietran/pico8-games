@@ -79,109 +79,15 @@ function debugprint(text)
 		9) --color
 	debugrow+=1
 end
+--------------------------------
 -->8
---collision code
-
-function col_corners(agent,axis,v)
-	--given an agent and velocity, 
-	--this returns the coords of 
-	--the two corners that should 
-	--be checked for collisions
-	local x1,x2,y1,y2
-
-	--x movement and y movement
-	--are calc'd separately. when
-	--this func is called, we only
-	--need to check one axis
-
-	if axis=='x' then
-		--if we have x-velocity, then
-		--return the coords for the
-		--right edge or left edge of
-		--our agent sprite
-		x1=agent.x+sgn(v)*agent.wr
-		y1=agent.y-agent.hr
-		x2=x1
-		y2=agent.y+agent.hr
-	elseif axis=='y' then
-		--if we have y-velocity, then
-		--return the coords for the
-		--top edge or bottom edge of
-		--our agent sprite
-		x1=agent.x-agent.wr
-		y1=agent.y+sgn(v)*agent.hr
-		y2=y1
-		x2=agent.x+agent.wr
-	end
-
-	--x1,y1 now represents the
-	--"near" corner to check
-	--(based on velocity), and
-	--x2,y2 the "far" corner
-	return x1,y1,x2,y2
-end
-
-function collide(agent,axis,v,nearonly)
-	--init hitmover checks
-	justhitmover=false
-	lasthitmover=nil
-
-	--get the 2 corners that
-	--should be checked
-	x1,y1,x2,y2=col_corners(agent,axis,v)
-
-	--add our potential movement
-	if axis=='x' then
-		x1+=v
-		x2+=v
-	else
-		y1+=v
-		y2+=v
-	end
-
-	--query our 2 points to see
-	--what tile types they're in
-	local tile1=mget(x1/8,y1/8)
-	local tile2=mget(x2/8,y2/8)
-
-	--"nearonly" indicates we only
-	--want to know if our near
-	--corner will be in a wall
-	if nearonly and
-		iswall(tile1) and 
-		(tile1!=2 or y1%8<4) 
-	then
-		return true
-	end
-
-	--if not nearonly, check if
-	--either corner will hit a wall
-	if not nearonly and
-		(iswall(tile1) or 
-		iswall(tile2))
-	then 
-		return true
-	end
-
-	--now check if we will hit any
-	--moving platforms
-
-	-- no hits detected
-	return false
-end
-
-function iswall(tile)
- --we know our tile sprites
- --our stored in slots 1-7
- return tile>=1 and tile<=7
-end
--->8
---player object (an agent)
+--player object-----------------
 player={}
 --the sprite is 3x5, so the
 --wr and hr dimensions are 
 --radii, and x/y is the
 --initial center position
+
 player.wr=1
 player.hr=2
 player.w=3
@@ -193,6 +99,7 @@ player.vx=0
 player.vy=0
 
 player.hit_jump=false
+player.jumpv=3
 
 --movement states
 player.standing=false
@@ -311,15 +218,15 @@ player.movejump=function(p)
 	--started falling, then jump
 	if(not p.hit_jump) return false
 	if p.standing then
-		p.vy=min(p.vy,-3)
+		p.vy=min(p.vy,-p.jumpv)
 	elseif p.wallsliding then
 	-- allow walljump if sliding
 		--use normal jump speed,
 		--but proportionate to how 
 		--fast player is currently
 		--sliding down wall
-		p.vy-=3
-		p.vy=mid(p.vy,-1,-3)
+		p.vy-=p.jumpv
+		p.vy=mid(p.vy,-p.jumpv/3,-p.jumpv)
 
 		--set x velocity / direction
 		--based on wall facing
@@ -332,21 +239,22 @@ player.movejump=function(p)
 end --player.movejump
 
 player.groundinput=function(p)
-	if btn(0) then
 	--pressing left
+	if btn(0) then
 		p.flipx=true
 		--brake if moving in
 		--opposite direction
 		if(p.vx>0) p.vx*=.9
 		p.vx-=.2*dt
-	elseif btn(1) then
 	--pressing right
+	elseif btn(1) then
 		p.flipx=false
 		if(p.vx<0) p.vx*=.9
 		p.vx+=.2*dt
-	else
 	--pressing neither, slow down
-		p.vx*=.88
+	--by our friction amount
+	else
+		p.vx*=friction
 	end
 end --player.groundinput
 
@@ -362,8 +270,8 @@ player.movex=function(p)
 	--xsteps is the number of
 	--pixels we think we'll move
 	--based on player.vx
-
 	local xsteps=abs(p.vx)*dt
+
 	--for each pixel we're
 	--potentially x-moving,
 	--check collision
@@ -448,6 +356,107 @@ player.effects=function(p)
 		p.runtimer-=p.vy*wallrunanimspeed
 	end
 end --player.effects
+
+--------------------------------
+-->8
+--collision code----------------
+
+col_corners=function(p,a,v)
+	--given an agent and velocity, 
+	--this returns the coords of 
+	--the two corners that should 
+	--be checked for collisions
+	local x1,x2,y1,y2
+
+	--x movement and y movement
+	--are calc'd separately. when
+	--this func is called, we only
+	--need to check one a
+
+	if a=='x' then
+		--if we have x-velocity, then
+		--return the coords for the
+		--right edge or left edge of
+		--our agent sprite
+		x1=p.x+sgn(v)*p.wr
+		y1=p.y-p.hr
+		x2=x1
+		y2=p.y+p.hr
+	elseif a=='y' then
+		--if we have y-velocity, then
+		--return the coords for the
+		--top edge or bottom edge of
+		--our p sprite
+		x1=p.x-p.wr
+		y1=p.y+sgn(v)*p.hr
+		y2=y1
+		x2=p.x+p.wr
+	end
+
+	--x1,y1 now represents the
+	--"near" corner to check
+	--(based on velocity), and
+	--x2,y2 the "far" corner
+	return x1,y1,x2,y2
+end
+
+--check if the given (p)
+--collides on the given a (a)
+--within the given distance (d)
+collide=function(p,a,d,nearonly)
+	--init hitmover checks
+	justhitmover=false
+	lasthitmover=nil
+
+	--get the 2 corners that
+	--should be checked
+	x1,y1,x2,y2=col_corners(p,a,d)
+
+	--add our potential movement
+	if a=='x' then
+		x1+=d
+		x2+=d
+	else
+		y1+=d
+		y2+=d
+	end
+
+	--query our 2 points to see
+	--what tile types they're in
+	local tile1=mget(x1/8,y1/8)
+	local tile2=mget(x2/8,y2/8)
+
+	--"nearonly" indicates we only
+	--want to know if our near
+	--corner will be in a wall
+	if nearonly and
+		iswall(tile1) and 
+		(tile1!=2 or y1%8<4) 
+	then
+		return true
+	end
+
+	--if not nearonly, check if
+	--either corner will hit a wall
+	if not nearonly and
+		(iswall(tile1) or 
+		iswall(tile2))
+	then 
+		return true
+	end
+
+	--now check if we will hit any
+	--moving platforms
+
+	-- no hits detected
+	return false
+end
+
+function iswall(tile)
+ --we know our tile sprites
+ --our stored in slots 1-7
+ return tile>=1 and tile<=7
+end
 
 __gfx__
 000000001555555144444444cd1d1d1c444444444444444444444444444444440505505000000000000000000000000000000000000000000000000000000000
