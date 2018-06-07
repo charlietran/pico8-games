@@ -342,28 +342,15 @@ player.movey=function(p)
 		if collide(p,'y',step) then
 			--y collision detected
 
-			if p.vy>1 then
-				--if we're moving fast
-				--enough to create effects
-
-				--play a landing sound
-				--based on current y speed
-				if p.vy>5 then 
-					sfx(15)
-				else
-					sfx(14)
-				end
-
-				--set the landing timer
-				--based on current speed
-				p.landtimer=p.vy
-
-				--slight camera shake
-				shakevy+=p.vy/6
+			--trigger a landing effect
+			if p.vy > 1 then
+				p.landing_v=p.vy
 			end
+
+			--zero out y velocity and
+			--reset falling timer
 			p.vy=0
 			p.falltimer=0
-			break
 		else
 			--no y collision detected
 			p.y+=step
@@ -374,7 +361,17 @@ end --player.movey
 
 player.effects=function(p)
 	if p.standing then
-		--update the run timer to
+		p:runningeffects()
+		p:landingeffects()
+	elseif p.wallsliding then
+		p:slidingeffects()
+	end
+
+	p:headeffects()
+end --player.effects
+
+player.runningeffects=function(p)
+		--updates the run timer to
 		--inform the running animation
 
 		--if we're slow/still, then
@@ -387,7 +384,9 @@ player.effects=function(p)
 		else
 			local oruntimer=p.runtimer
 			p.runtimer+=abs(p.vx)*runanimspeed
-			if flr(oruntimer)!=flr(p.runtimer) then
+			if flr(oruntimer)!=flr(p.runtimer) and
+			   p.etimer%2==0
+			then
 				spawnp(
 					p.x, --x pos
 					p.y+2,--y pos
@@ -403,24 +402,82 @@ player.effects=function(p)
 		if p.landtimer>0 then
 			p.landtimer-=0.4
 		end
-	elseif p.wallsliding then
+end
+
+player.landingeffects=function(p)
+	--only spawn landing effects
+	--if we've a landing velocity
+	if(not p.landing_v) return
+
+	--play a landing sound
+	--based on current y speed
+	if p.landing_v>5 then 
+		sfx(15)
+	else
+		sfx(14)
+	end
+
+	--set the landing timer
+	--based on current speed
+	p.landtimer=p.landing_v
+
+	--spawn landing particles
+	for j=0,p.landing_v*2 do
+		spawnp(
+			p.x,
+			p.y+2,
+			p.landing_v/8*(rnd(2)-1),
+			-p.landing_v/7*rnd(),
+			.3
+		)
+	end
+
+	--slight camera shake
+	shakevy+=p.landing_v/6
+
+	--reset landing velocity
+	p.landing_v=nil
+end
+
+player.slidingeffects=function(p)
 		local oruntimer=p.runtimer
 		p.runtimer-=p.vy*wallrunanimspeed
 
 		if flr(oruntimer)!=flr(p.runtimer) then
 			spawnp(
-				p.x-p.wallfacing,
+				p.x-p.facing,
 				p.y+1,
-				p.wallfacing*abs(p.vy)/4,
+				p.facing*abs(p.vy)/4,
 				0,
 				0.2
 			)
 		end
+end
+
+player.headeffects=function(p)
+	if p.etimer%6==0 then
+		local ex,evx,edir
+		edir=p.prevf and -1 or 1
+		spawnp(
+			p.prevx,
+			p.prevy - p.hr,
+			-edir*0.2, -- x vel
+			-0.1, -- y vel
+			0.1, --jitter
+			9, -- color
+			.7 -- duration
+			)
+		p.prevx=p.x
+		p.prevy=p.y
+		p.prevf=p.flipx
 	end
-end --player.effects
+
+	p.etimer+=1
+	if(p.etimer>10) p.etimer=1
+end
 
 -- spawn a particle effect
-spawnp=function(x,y,vx,vy,jitter)
+spawnp=function(x,y,vx,vy,jitter,c,d)
 	--object for the particle
 	local p={
 		x=x,
@@ -428,10 +485,11 @@ spawnp=function(x,y,vx,vy,jitter)
 		ox=x,
 		oy=y,
 		vx=2*(vx+rnd(jitter*2)-jitter),
-		vy=2*(vy+rnd(jitter*2)-jitter)
+		vy=2*(vy+rnd(jitter*2)-jitter),
+		c=c or 5,
+		d=d or 0.5
 	}
-
-	p.duration=.5+rnd(.5)
+	p.duration=p.d+rnd(p.d)
 	p.life=1
 
 	add(specks,p)
@@ -569,7 +627,7 @@ specks.draw=function(this)
 			speck.y,
 			speck.ox,
 			speck.oy,
-			5+(speck.life/2)*3
+			speck.c+(speck.life/2)*3
 		)
 	end
 end
