@@ -355,10 +355,26 @@ player.effects=function(p)
 	if p.standing then
 		--update the run timer to
 		--inform the running animation
+
+		--if we're slow/still, then
+		--zero out the run timer
 		if abs(p.vx)<.3 then
 			p.runtimer=0
+		--otherwise if we're moving,
+		--tick the run timer and
+		--spawn running particles
 		else
+			local oruntimer=p.runtimer
 			p.runtimer+=abs(p.vx)*runanimspeed
+			if flr(oruntimer)!=flr(p.runtimer) then
+				spawnp(
+					p.x, --x pos
+					p.y+2,--y pos
+					-p.vx/3,--x vel
+					-abs(p.vx)/6,--y vel,
+					.5 --jitter amount
+				)
+			end
 		end
 
 		--update the "landed" timer
@@ -367,7 +383,18 @@ player.effects=function(p)
 			p.landtimer-=0.4
 		end
 	elseif p.wallsliding then
+		local oruntimer=p.runtimer
 		p.runtimer-=p.vy*wallrunanimspeed
+
+		if flr(oruntimer)!=flr(p.runtimer) then
+			spawnp(
+				p.x-p.wallfacing,
+				p.y+1,
+				p.wallfacing*abs(p.vy)/4,
+				0,
+				0.2
+			)
+		end
 	end
 end --player.effects
 
@@ -384,9 +411,9 @@ spawnp=function(x,y,vx,vy,jitter)
 	}
 
 	p.duration=.5+rnd(.5)
-	p.alive=true
+	p.life=1
 
-	add(specks,speck)
+	add(specks,p)
 end
 --------------------------------
 -->8
@@ -496,10 +523,34 @@ end
 --specks holds all particles to
 --be drawn in our object loop
 specks={}
-specks.update=function(s)
+specks.update=function(this)
+	for speck in all(this) do
+		speck.ox=speck.x
+		speck.oy=speck.y
+		speck.x+=speck.vx
+		speck.y+=speck.vy
+		speck.vx*=.85
+		speck.vy*=.85
+		speck.life-=1/30/speck.duration
+
+		if speck.life<0 or
+			iswall(mget(speck.x/8,speck.y/8))
+		then
+			del(this, speck)
+		end
+	end 
 end
 
-specks.draw=function(s)
+specks.draw=function(this)
+	for speck in all(this) do
+		line(
+			speck.x,
+			speck.y,
+			speck.ox,
+			speck.oy,
+			5+(speck.life/2)*3
+		)
+	end
 end
 
 __gfx__
