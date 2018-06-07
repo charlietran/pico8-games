@@ -60,16 +60,18 @@ function _draw()
 
 	--reset camera
 	camera(0,0)
-	--debug
-	debug=false
+
+	-- debug=true
 	debugrow=0
 	if debug then
-		debugprint("x velocity: " .. player.vx)
-		debugprint("y velocity: " .. player.vy)
+		-- debugprint("x velocity: " .. player.vx)
+		-- debugprint("y velocity: " .. player.vy)
 		debugprint("run timer: " .. player.runtimer)
-		debugprint("sprite: " .. player.spr)
-		debugprint("land timer: " .. abs(player.landtimer))
-		debugprint("fall timer: " .. player.falltimer)
+		debugprint("mem: " .. stat(0))
+		debugprint("cpu: " .. stat(1))
+		-- debugprint("sprite: " .. player.spr)
+		-- debugprint("land timer: " .. abs(player.landtimer))
+		-- debugprint("fall timer: " .. player.falltimer)
 	end
 
 	--draw the map
@@ -92,6 +94,24 @@ end
 -->8
 --player object-----------------
 player={}
+
+--player attributes-----
+--x/y pos and velocity
+player.x=2 *8
+player.y=7 *8
+player.vx=0
+player.vy=0
+
+--lists of our previous
+--positions/flippage for
+--effects rendering
+player.prevx=0
+player.prevy=0
+player.prevf=0
+
+--the "effects" timer
+player.etimer=0
+
 --the sprite is 3x5, so the
 --wr and hr dimensions are 
 --radii, and x/y is the
