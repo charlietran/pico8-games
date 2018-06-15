@@ -721,6 +721,11 @@ end
 -->8
 --camera------------------------
 cam={}
+--x/y represent the current
+--offset of the camera. offset
+--of 0,0 means the camera origin
+--will be set as default to the
+--top left of the screen
 cam.x=0
 cam.y=0
 
@@ -728,42 +733,60 @@ cam.shake_remaining=0
 
 cam.threshold=24
 
+--update the game camera to
+--track the player within our
+--specified threshold
 cam.update=function(c)
 	c.shake_remaining=max(0,c.shake_remaining)
 
-	--follow the player
+	--if the camera is too far to
+	--the left of the player, then
+	--shift the camera at most 4
+	--pixels to the right
 	if (c.x+c.threshold)<player.x then
 		c.x+=min(player.x-(c.x+c.threshold),4)
 	end
+	--...and if too far right, then
+	--shift camera at most 4 pixels
+	--to the left
 	if (c.x-c.threshold)>player.x then
-		c.x+=min(player.x-(c.x-c.threshold),4)
+		c.x-=min((c.x-c.threshold)-player.x,4)
 	end
+	--...same if cam is too far 
+	--above, shift it downwards
+	--(positive y means downward)
 	if (c.y+c.threshold)<player.y then
 		c.y+=min(player.y-(c.y+c.threshold),4)
 	end
+	--...and lastly, if too far 
+	--below, shift it upwards
 	if (c.y-c.threshold)>player.y then
-		c.y+=min(player.y-(c.y-c.threshold),4)
+		c.y-=min((c.y-c.threshold)-player.y,4)
 	end
 
-	if(c.x<64)c.x=64
-	if(c.x>192)c.x=192
-	if(c.y<64)c.y=64
-	if(c.y>192)c.y=192
+	-- since we have a 128x128
+	-- screen, you'd think that the
+	-- bounds of our camera would
+	-- be 0,0 to 127,127. however,
+	-- we offset our final numbers
+	-- by -64,-64 so the player
+	-- is centered. therefore, we
+	-- clamp our camera coords to
+	-- be between 64,64 and 192,192
+	if(c.x<64)  c.x=64
+	if(c.x>192) c.x=192
+	if(c.y<64)  c.y=64
+	if(c.y>192) c.y=192
 end
 
+--this returns coordinates to
+--be consumed by pico8 camera()
+--offset by -64,-64 so that the
+--player is centered
 cam.position=function(c)
 	return c.x-64,c.y-64
 	-- return 0,0
 end
-
---------------------------------
--->8
---level generation--------------
---cribbed from PicoLunky--
-maze={}
-
---maze constructor
-
 
 --
 
