@@ -28,20 +28,9 @@ function _init()
 	--game length timer
 	gametime=0
 
+	--we start in gamestate "intro"
+	--and then move into "game"
 	gamestate="intro"
-
-	-- camera shake values
-	shakex=0
-	shakey=0
-	shakevx=0
-	shakevy=0
-	shake=0
-
-	-- did player just touch a 
-	-- mover (moving platform)?
-	justhitmover=false
-	lasthitmover=nil
-	-- music(30)
 
 	make_clouds()
 
@@ -484,7 +473,7 @@ player.landingeffects=function(p)
 	end
 
 	--slight camera shake
-	shakevy+=p.landing_v/6
+	--shakevy+=p.landing_v/6
 
 	--reset landing velocity
 	p.landing_v=nil
