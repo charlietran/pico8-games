@@ -30,10 +30,6 @@ function _init()
 
 	gamestate="intro"
 
-	-- camera position
-	cx=0
-	cy=0
-
 	-- camera shake values
 	shakex=0
 	shakey=0
@@ -47,6 +43,8 @@ function _init()
 	lasthitmover=nil
 	-- music(30)
 
+	make_clouds()
+
 	--set up our objects table
 	add(objects,player)
 	add(objects,specks)
@@ -55,6 +53,7 @@ end
 function _update60()
 	if gamestate=="game" then
 		for object in all(objects) do
+			cam:update()
 			object:update()
 		end
 	elseif gamestate=="intro" then
@@ -73,9 +72,6 @@ function _draw()
 end
 
 function _drawgame()
-	--reset camera
-	camera(0,0)
-
 	-- debug=true
 	if debug then
 		debugrow=0
@@ -89,40 +85,51 @@ function _drawgame()
 		-- debugprint("fall timer: " .. player.falltimer)
 	end
 
-	bgdraw()
-
+	camera(0,0)
+	draw_clouds()
+	camera(cam:position())
 	--draw the map
 	map(0,0,0,0,128,128)
+
 
 	for object in all(objects) do
 		object:draw()
 	end
 end
 
-function bgdraw()
-
-	-- fillp(0b0011 1100 1100 0011)
- -- cloud checker pattern
-	-- 0 = filled
-	--     1111
-	--     1110
-	--     1111
-	--     0101
-	fillp(0b1111111010110101)
+function make_clouds()
+	clouds={}
 	for i=1,30 do
 		srand(i)
-		local size=i/30
-
-			-- circles move with parallax
-			-- x position scrolls slowly
-			local x=(rnd(128+64)-(cx+time()*5)*(size*.7+.3)*.4)%(128+64)-32
-			local y=(rnd(128+64)-cy*(size*.7+.3)*.4)%(128+64)-32
-
-			col=1
-
-			circfill(x,y,size*16,col)
-			-- circfill(x,y,size*(col%1)*16,col+1)
+		local size=i/3
+		clouds[i]={
+			x=rnd(128)-size,
+			y=rnd(128)-size,
+			size=size
+		}
 	end
+	--reset randomness seed
+	srand(bnot(time()))
+end
+
+function draw_clouds()
+ -- cloud checker pattern
+	-- 0 = filled, 1 = empty
+	-- 0100
+	-- 1001
+	-- 0011
+	-- 1110
+	fillp(0b1010010110100101)
+
+	local t=time()*2
+	for cloud in all(clouds) do
+			circfill(
+				(cloud.x-t)%128,
+				(cloud.y)%128,
+				cloud.size,
+				1)
+	end
+
 	fillp()
 end
 
@@ -505,9 +512,9 @@ player.headeffects=function(p)
 		spawnp(
 			p.prevx,
 			p.prevy - p.hr,
-			-edir*0.2, -- x vel
+			-edir*0.3, -- x vel
 			-0.1, -- y vel
-			0.1, --jitter
+			0, --jitter
 			9, -- color
 			.7 -- duration
 			)
@@ -710,8 +717,55 @@ intro.update=function()
 	end
 end
 
+--------------------------------
+-->8
+--camera------------------------
+cam={}
+cam.x=0
+cam.y=0
+
+cam.shake_remaining=0
+
+cam.threshold=24
+
+cam.update=function(c)
+	c.shake_remaining=max(0,c.shake_remaining)
+
+	--follow the player
+	if (c.x+c.threshold)<player.x then
+		c.x+=min(player.x-(c.x+c.threshold),4)
+	end
+	if (c.x-c.threshold)>player.x then
+		c.x+=min(player.x-(c.x-c.threshold),4)
+	end
+	if (c.y+c.threshold)<player.y then
+		c.y+=min(player.y-(c.y+c.threshold),4)
+	end
+	if (c.y-c.threshold)>player.y then
+		c.y+=min(player.y-(c.y-c.threshold),4)
+	end
+
+	if(c.x<64)c.x=64
+	if(c.x>192)c.x=192
+	if(c.y<64)c.y=64
+	if(c.y>192)c.y=192
+end
+
+cam.position=function(c)
+	return c.x-64,c.y-64
+	-- return 0,0
+end
+
+--------------------------------
+-->8
+--level generation--------------
+--cribbed from PicoLunky--
+maze={}
+
+--maze constructor
 
 
+--
 
 __gfx__
 000000001555555144444444cd1d1d1c444444444444444444444444444444440505505000000000000000000000000000000000000000000000000000000000
