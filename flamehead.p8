@@ -688,20 +688,12 @@ end
 -->8
 --intro object------------------
 intro={}
-intro.t=0
+intro.a=0
 intro.r=2
 intro.draw=function()
-	intro.t+=2/360
-	if(intro.t>1)intro.t=0
-	for i=10,7,-1 do
-		print(
-			"flamehead", 
-			52 + intro.r * i*sin(intro.t), 
-			48 + intro.r * i*cos(intro.t), 
-			i
-		)
-	end
 
+	-- print "press x to start"
+	-- in a static position
 	print(
 		"press âŽ to start",
 		32,
@@ -709,6 +701,39 @@ intro.draw=function()
 		7
 	)
 
+	--draw "flamehead" swirling in
+	--a circular pattern
+
+	-- intro.a is the "angle"
+	-- pico8 sin() and cos() range
+	-- from 0-1 instead of 0-2ã as
+	-- most calculators, so we
+	-- increment intro.a by 2/360
+	-- to advance our sin/cos funcs
+	-- by 2 "degrees"
+	intro.a+=2/360
+
+	-- flip back from 1 to 0 since
+	-- 2ã==0 for the purposes of
+	-- sin/cos
+	if(intro.a>1)intro.a=0
+
+	-- from colors 10 down to 7
+	-- (yellow down to white)
+	for i=10,7,-1 do
+		-- print the game title in
+		-- gradually smaller circles
+		-- based on our current i
+		-- "intro.r" is just a 
+		-- distance multiplier to
+		-- separate the colors more
+		print(
+			"flamehead", 
+			52 + intro.r*i*sin(intro.a), 
+			48 + intro.r*i*cos(intro.a), 
+			i
+		)
+	end
 end
 
 intro.update=function()
