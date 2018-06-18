@@ -1,40 +1,42 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
---run-charlie
+-- f l a m e h e a d
 
---holds all objects that exist
---in the game loop. each object
---should have :update and :draw
+-- holds all objects that exist
+-- in the game loop. each object
+-- should have :update and :draw
 objects={}
 
 function _init()
-	--gravity = how many pixels per
-	--frame should our y velocity 
-	--decrease when falling
+	-- how many pixels per frame
+	-- should our y velocity
+	-- decrease when falling
 	gravity=.2
 	friction=.88
 
-	--speed of our animation
-	--loops, used in player.effects
+	-- speed of our animation loops
 	runanimspeed=.12
 	wallrunanimspeed=.2
 
-	--delta time multiplier, 
-	--essentially controls the
-	--speed of the game
+	-- delta time multiplier, 
+	-- essentially controls the
+	-- speed of the game
 	dt=.5
 
-	--game length timer
+	-- game length timer
 	gametime=0
 
-	--we start in gamestate "intro"
-	--and then move into "game"
+	-- gamestate starts in "intro"
+	-- and then move into "game"
+	-- and then "end"
 	gamestate="intro"
 
 	make_clouds()
+	player.init()
+	cam.init()
 
-	--set up our objects table
+	-- set up our objects table
 	add(objects,player)
 	add(objects,specks)
 end
@@ -47,6 +49,8 @@ function _update60()
 		end
 	elseif gamestate=="intro" then
 		intro:update()
+	elseif gamestate=="outro" then
+		outro:update()
 	end
 end
 
@@ -62,24 +66,13 @@ end
 
 function _drawgame()
 	-- debug=true
-	if debug then
-		debugrow=0
-		-- debugprint("x velocity: " .. player.vx)
-		-- debugprint("y velocity: " .. player.vy)
-		debugprint("run timer: " .. player.runtimer)
-		debugprint("mem: " .. stat(0))
-		debugprint("cpu: " .. stat(1))
-		-- debugprint("sprite: " .. player.spr)
-		-- debugprint("land timer: " .. abs(player.landtimer))
-		-- debugprint("fall timer: " .. player.falltimer)
-	end
+	if(debug) draw_debug()
 
 	camera(0,0)
 	draw_clouds()
 	camera(cam:position())
 	--draw the map
 	map(0,0,0,0,128,128)
-
 
 	for object in all(objects) do
 		object:draw()
@@ -135,70 +128,85 @@ end
 --player object-----------------
 player={}
 
---player attributes-----
---x/y pos and velocity
-player.x=2 *8
-player.y=7 *8
-player.vx=0
-player.vy=0
+function player.init()
+	--player attributes-----
 
---lists of our previous
---positions/flippage for
---effects rendering
-player.prevx=0
-player.prevy=0
-player.prevf=0
+	-- find start sprite (#112) and
+	-- set initial x/y position
+	for i=0,127 do
+		for j=0,31 do
+			if mget(i,j)==112 then
+				player.x=i*8
+				player.y=j*8
+				mset(i,j,0)
+				break
+			end
+		end
+		if(player.x) break
+	end
 
---the "effects" timer
-player.etimer=0
+	-- velocity
+	player.vx=0
+	player.vy=0
 
---the sprite is 3x5, so the
---wr and hr dimensions are 
---radii, and x/y is the
---initial center position
+	--lists of our previous
+	--positions/flippage for
+	--effects rendering
+	player.prevx=0
+	player.prevy=0
+	player.prevf=0
 
-player.wr=1
-player.hr=2
-player.w=3
-player.h=5
+	--the "effects" timer
+	player.etimer=0
 
-player.hit_jump=false
+	--the sprite is 3x5, so the
+	--wr and hr dimensions are 
+	--radii, and x/y is the
+	--initial center position
 
---instantaneous jump velocity
---the "power" of the jump
-player.jumpv=3
+	player.wr=1
+	player.hr=2
+	player.w=3
+	player.h=5
 
---movement states
-player.standing=false
-player.wallsliding=false
+	player.hit_jump=false
 
---what direction we're facing
---1 or -1, used when we're 
---facing away from a wall
---while sliding
-player.facing=0
+	--instantaneous jump velocity
+	--the "power" of the jump
+	player.jumpv=3
 
---timers used for animation
---states and particle fx
-player.falltimer=0
-player.landtimer=0
-player.runtimer=0
-player.headanimtimer=0
+	--movement states
+	player.standing=false
+	player.wallsliding=false
 
-player.spr=64
---sprite numbers------
---64 standing
---65 running 1
---66 running 2
---67	crouching (post landing)
---80 jumping
---81 falling
---96 sliding 1
---97 sliding 2
---98 sliding 3 / hanging
---99 sliding 4
+	--what direction we're facing
+	--1 or -1, used when we're 
+	--facing away from a wall
+	--while sliding
+	player.facing=0
 
-player.draw=function(p)
+	--timers used for animation
+	--states and particle fx
+	player.falltimer=0
+	player.landtimer=0
+	player.runtimer=0
+	player.headanimtimer=0
+
+	player.spr=64
+	--sprite numbers------
+	--64 standing
+	--65 running 1
+	--66 running 2
+	--67	crouching (post landing)
+	--80 jumping
+	--81 falling
+	--96 sliding 1
+	--97 sliding 2
+	--98 sliding 3 / hanging
+	--99 sliding 4
+end
+
+function player.draw(p)
 	p.headanimtimer=p.headanimtimer%3+1
 	local xoff=p.wr
 	local yoff=p.hr
@@ -238,7 +246,7 @@ player.draw=function(p)
 	pal()
 end
 
-player.update=function(p)
+function player.update(p)
 	p.standing=p.falltimer<7
 	p.moving=nil
 	--move the player, x then y
@@ -250,7 +258,7 @@ player.update=function(p)
 	p:effects()
 end
 
-player.checksliding=function(p)
+function player.checksliding(p)
 	p.wallsliding=false
 	--hanging on wall to the right?
 	if collide(p,'x',1) then
@@ -265,7 +273,7 @@ player.checksliding=function(p)
 	end
 end
 
-player.handleinput=function(p)
+function player.handleinput(p)
 	if p.standing then
 		p:groundinput()
 	else
@@ -278,7 +286,7 @@ player.handleinput=function(p)
 	p.vx*=0.98
 end
 
-player.jumpinput=function(p)
+function player.jumpinput(p)
 	local jump_pressed=btn(4)
 	if jump_pressed and not p.is_jumping then
 		p.hit_jump=true
@@ -288,7 +296,7 @@ player.jumpinput=function(p)
 	p.is_jumping=jump_pressed
 end --player.jumpinput
 
-player.movejump=function(p)
+function player.movejump(p)
 	--if standing, or if only just
 	--started falling, then jump
 	if(not p.hit_jump) return false
@@ -313,7 +321,7 @@ player.movejump=function(p)
 	end
 end --player.movejump
 
-player.groundinput=function(p)
+function player.groundinput(p)
 	--pressing left
 	if btn(0) then
 		p.flipx=true
@@ -333,7 +341,7 @@ player.groundinput=function(p)
 	end
 end --player.groundinput
 
-player.airinput=function(p)
+function player.airinput(p)
 	if btn(0) then
 		p.vx-=0.15*dt
 	elseif btn(1) then
@@ -341,7 +349,7 @@ player.airinput=function(p)
 	end
 end --player.airinput
 
-player.movex=function(p)
+function player.movex(p)
 	--xsteps is the number of
 	--pixels we think we'll move
 	--based on player.vx
@@ -371,7 +379,7 @@ player.movex=function(p)
 	end
 end --player.movex
 
-player.movey=function(p)
+function player.movey(p)
 	--always apply gravity 
 	--(downward acceleration)
 	p.vy+=gravity*dt
@@ -399,7 +407,7 @@ player.movey=function(p)
 	end
 end --player.movey
 
-player.effects=function(p)
+function player.effects(p)
 	if p.standing then
 		p:runningeffects()
 		p:landingeffects()
@@ -407,10 +415,10 @@ player.effects=function(p)
 		p:slidingeffects()
 	end
 
-	p:headeffects()
+	p:head_effects()
 end --player.effects
 
-player.runningeffects=function(p)
+function player.runningeffects(p)
 		--updates the run timer to
 		--inform the running animation
 
@@ -444,7 +452,7 @@ player.runningeffects=function(p)
 		end
 end
 
-player.landingeffects=function(p)
+function player.landingeffects(p)
 	--only spawn landing effects
 	--if we've a landing velocity
 	if(not p.landing_v) return
@@ -479,7 +487,7 @@ player.landingeffects=function(p)
 	p.landing_v=nil
 end
 
-player.slidingeffects=function(p)
+function player.slidingeffects(p)
 		local oruntimer=p.runtimer
 		p.runtimer-=p.vy*wallrunanimspeed
 
@@ -494,7 +502,7 @@ player.slidingeffects=function(p)
 		end
 end
 
-player.headeffects=function(p)
+function player.head_effects(p)
 	if p.etimer%6==0 then
 		local ex,evx,edir
 		edir=p.prevf and -1 or 1
@@ -517,7 +525,7 @@ player.headeffects=function(p)
 end
 
 -- spawn a particle effect
-spawnp=function(x,y,vx,vy,jitter,c,d)
+function spawnp(x,y,vx,vy,jitter,c,d)
 	--object for the particle
 	local p={
 		x=x,
@@ -538,7 +546,7 @@ end
 -->8
 --collision code----------------
 
-col_corners=function(p,a,v)
+function col_corners(p,a,v)
 	--given an agent and velocity, 
 	--this returns the coords of 
 	--the two corners that should 
@@ -580,7 +588,7 @@ end
 --check if the given (p)
 --collides on the given a (a)
 --within the given distance (d)
-collide=function(p,a,d,nearonly)
+function collide(p,a,d,nearonly)
 	--init hitmover checks
 	justhitmover=false
 	lasthitmover=nil
@@ -642,7 +650,7 @@ end
 --specks holds all particles to
 --be drawn in our object loop
 specks={}
-specks.update=function(this)
+function specks.update(this)
 	for speck in all(this) do
 		speck.ox=speck.x
 		speck.oy=speck.y
@@ -660,7 +668,7 @@ specks.update=function(this)
 	end 
 end
 
-specks.draw=function(this)
+function specks.draw(this)
 	for speck in all(this) do
 		line(
 			speck.x,
@@ -679,7 +687,7 @@ end
 intro={}
 intro.a=0
 intro.r=2
-intro.draw=function()
+function intro.draw()
 
 	-- print "press x to start"
 	-- in a static position
@@ -725,7 +733,7 @@ intro.draw=function()
 	end
 end
 
-intro.update=function()
+function intro.update()
 	if btnp(4) or btnp(5) then
 		gamestate="game"
 	end
@@ -735,75 +743,87 @@ end
 -->8
 --camera------------------------
 cam={}
---x/y represent the current
---offset of the camera. offset
---of 0,0 means the camera origin
---will be set as default to the
---top left of the screen
-cam.x=0
-cam.y=0
+-- x/y represent the current
+-- offset of the camera. offset
+-- of 0,0 means the camera will
+-- originate (top left corner)
+-- be at top left of the screen
+function cam.init()
+	cam.x=player.x
+	cam.y=player.y
 
-cam.shake_remaining=0
+	cam.shake_remaining=0
 
-cam.threshold=24
+	cam.threshold=24
+end
 
 --update the game camera to
 --track the player within our
 --specified threshold
-cam.update=function(c)
+function cam.update(c)
 	c.shake_remaining=max(0,c.shake_remaining)
 
-	--if the camera is too far to
-	--the left of the player, then
-	--shift the camera at most 4
-	--pixels to the right
+	-- if the camera is too far to
+	-- the left of the player, then
+	-- shift the camera towards the
+	-- player, at most 4 pixels
 	if (c.x+c.threshold)<player.x then
 		c.x+=min(player.x-(c.x+c.threshold),4)
 	end
-	--...and if too far right, then
-	--shift camera at most 4 pixels
-	--to the left
+	-- and if too far right, then
+	-- shift camera to the left
 	if (c.x-c.threshold)>player.x then
 		c.x-=min((c.x-c.threshold)-player.x,4)
 	end
-	--...same if cam is too far 
-	--above, shift it downwards
-	--(positive y means downward)
+	-- same if cam is too far above
+	-- player, shift it downwards
+	-- (positive y means downward)
 	if (c.y+c.threshold)<player.y then
 		c.y+=min(player.y-(c.y+c.threshold),4)
 	end
-	--...and lastly, if too far 
-	--below, shift it upwards
+	-- and lastly, if too far 
+	-- below player, shift it up
 	if (c.y-c.threshold)>player.y then
 		c.y-=min((c.y-c.threshold)-player.y,4)
 	end
 
-	-- since we have a 128x128
-	-- screen, you'd think that the
-	-- bounds of our camera would
-	-- be 0,0 to 127,127. however,
-	-- we offset our final numbers
-	-- by -64,-64 so the player
-	-- is centered. therefore, we
-	-- clamp our camera coords to
-	-- be between 64,64 and 192,192
-	if(c.x<64)  c.x=64
-	if(c.x>192) c.x=192
-	if(c.y<64)  c.y=64
-	if(c.y>192) c.y=192
+	-- clamp the camera offset to
+	-- be within the bounds of our
+	-- 8x4 game map
+	c.x=mid(c.x,64,8*64-64)
+	c.y=mid(c.y,64,4*64-64)
 end
 
---this returns coordinates to
---be consumed by pico8 camera()
---offset by -64,-64 so that the
---player is centered
-cam.position=function(c)
+-- returns coordinates to be
+-- used by pico8 camera() func
+function cam.position(c)
 	return c.x-64,c.y-64
 	-- return 0,0
 end
 
---
+--------------------------------
+-->8
+--debugging---------------------
+function draw_debug()
+	debugrow=0
+	-- debugprint("x velocity: " .. player.vx)
+	-- debugprint("y velocity: " .. player.vy)
+	debug_print("run timer: " .. player.runtimer)
+	debug_print("mem: " .. stat(0))
+	debug_print("cpu: " .. stat(1))
+	-- debugprint("sprite: " .. player.spr)
+	-- debugprint("land timer: " .. abs(player.landtimer))
+	-- debugprint("fall timer: " .. player.falltimer)
+end
 
+function debug_print(text)
+	print(
+		text, 
+		32, --x
+		12+debugrow*6, --y
+		9) --color
+	debugrow+=1
+end
 __gfx__
 000000001555555111111111cd1d1d1c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000005d5dd5651d1dd1d1d1111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
