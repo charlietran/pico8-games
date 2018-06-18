@@ -107,12 +107,45 @@ function draw_clouds()
 	-- 1110
 	fillp(0b1010010110100101)
 
-	local t=time()*2
+	-- this time factor is used to
+	-- drift the clouds in the 
+	-- x direction. multiplied by
+	-- 10 to get the right cloud
+	-- drifting speed
+	local t=time()*10
+
+	-- draw the clouds as circles 
+	-- drifting in the x direction 
+	-- over time and with parallax
 	for cloud in all(clouds) do
+			local cloudx, cloudy
+			-- the y offset is the
+			-- product of our current cam
+			-- offset and the cloud size
+			-- so that larger (closer)
+			-- clouds appear to move more
+			-- multiplied the magic .01
+			-- to get the right parallax
+			-- feeling
+			cloudy=cloud.y-(cam.y*cloud.size*.01)%64
+
+			-- our x offset is the same,
+			-- with our time factor added
+			-- so that the clouds appear
+			-- to drift to the left
+			cloudx=cloud.x-((cam.x+t)*cloud.size*.01)%64
+
+			-- draw our circle, with a 
+			-- 128 modulo so that it
+			-- cycles through the left
+			-- to right screen edges
+			-- local dx=cloudx-player.x+cam.x-64
+			-- local dy=cloudy-player.y+cam.y-64
 			circfill(
-				(cloud.x-t)%128,
-				(cloud.y)%128,
+				cloudx,
+				cloudy,
 				cloud.size,
+				-- cloud.size*1.7-(abs(dx)+abs(dy))*.07,
 				1)
 	end
 
