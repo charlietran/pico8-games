@@ -1,13 +1,12 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
-t=0
-objects={}
+t=0 -- frame counter
+fps=60 -- frame rate
+objects={} -- all game objects
 
+-- called once at game start
 function _init()
-	-- the current time
-	t=0
-
 	add(objects,ship)
 	add(objects,enemies)
 
@@ -16,19 +15,23 @@ function _init()
 	end
 end
 
+-- called 60 times a sec
 function _update60()
-	--increment time
+	-- increment time
 	t+=1
 	
+	-- update all game objects
 	for object in all(objects) do
 		object:update()
 	end
 end
 
+-- also called 60 times a sec
+-- after _update60() 
 function _draw()
-	-- clear screen
-	cls()
+	cls()	-- clear screen
 
+	-- draw all game objects
 	for object in all(objects) do
 		object:draw()
 	end
@@ -39,13 +42,11 @@ end
 ship={}
 
 function ship.init(self)
-	self.x=60	-- x pos
+	self.x=60		-- x pos
 	self.y=110	-- y pos
-	self.w=12 -- width in pixels
-	self.h=16	-- height in pixels
-	self.sp=1 -- ship sprite
-	self.spw=2-- sprite width
-	self.sph=2 -- sprite height
+	self.w=12 	-- width in pixels
+	self.h=16		-- height in pixels
+	self.sp=1	 -- ship sprite
 end
 
 function ship.update(self)
@@ -80,46 +81,21 @@ function ship.draw(self)
 end
 -->8
 --enemies
-enemies={}
+enemies={
+	rows={},	-- the enemy rows
+	dir=1,			-- movement direction
+	speed=4,	-- move speed
+	y_drop=4,-- drop amount
+	y_off=0,	-- wave y offset
+	anim=0,	 -- anim frame number 
+ types={
+ 		{sp=64}, -- enemy type 1
+ 		{sp=65}, -- enemy type 2
+ 		{sp=66}  -- enemy type 1
+ 	}
+}
 
-function enemies.init(self)
-	-- holds all active enemies
-	self.rows={}
-
-	-- direction of movement
-	self.dir=1
-
-	-- speed of movement
-	self.speed=4
-	
-	-- amount to drop
-	self.dropy=4
-	
-	-- y offset of wave
-	self.yoff=0
-
-	-- sprite animation offset
-	self.anim_offset=16
-
-	-- width/height of the wave
-	self.width=0
-	self.height=0
-
-	-- the coords of where we can
-	-- place a new enemy
-	self.nextx=0
-	self.nexty=4
-	self.current_row=1
-	
-	self.types={
-		-- enemy type 1
-		{sp1=64,sp2=80},
-		-- enemy type 2
-		{sp1=65,sp2=81},
-		-- enemy type 3
-		{sp1=66,sp2=82}
-	}
-	
+function enemies.init(self)	
 	local enemy_rows={1,2,2,3,3}
 	for row,etype in pairs(enemy_rows) do
 		self.rows[row]={}
@@ -131,8 +107,7 @@ end
 
 function enemies.add_enemy(self,row,col,etype)
 	local e={
-		sp1=self.types[etype].sp1,
-		sp2=self.types[etype].sp2,
+		sp=self.types[etype].sp,
 		x=col*12,
 		y=row*12,
 		row=row
@@ -144,7 +119,7 @@ end
 function enemies.update(self)
 	-- move the enemies
 	if t%(60/self.speed)==0 then
-		self.anim_offset=self.anim_offset==0 and 16 or 0
+		self.anim=self.anim==0 and 1 or 0
 		for row in all(self.rows) do
 			for e in all(row) do
  			e.x+=self.dir
@@ -155,7 +130,7 @@ function enemies.update(self)
 		for row in all(self.rows) do
 			if row[#row].x+8>=127 or row[1].x<=0 then
 				self.dir=-self.dir
-				self.yoff+=self.dropy
+				self.y_off+=self.y_drop
 				break
 			end
 		end
@@ -167,9 +142,9 @@ function enemies.draw(self)
 		for enemy in all(row) do
 		pal(7,6+enemy.row)
 		spr(
-			enemy.sp1+self.anim_offset,
+			enemy.sp+self.anim*16,
 			enemy.x,
-			enemy.y+self.yoff)
+			enemy.y+self.y_off)
 		pal()
 		end
 	end
