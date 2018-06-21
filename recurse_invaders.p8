@@ -13,32 +13,32 @@ function _init()
 	for object in all(objects) do
 		object:init()
 	end
-end
+end -- _init()
 
 -- called 60 times a sec
 function _update60()
-	-- increment time
-	t+=1
+	t+=1	-- increment time
 	
 	-- update all game objects
 	for object in all(objects) do
 		object:update()
 	end
-end
+end -- _update60()
 
 -- also called 60 times a sec
 -- after _update60() 
 function _draw()
 	cls()	-- clear screen
-	map(0,0,0,0)
+	map(0,0)
 	-- draw all game objects
 	for object in all(objects) do
 		object:draw()
 	end
-end
+end -- _draw()
 
+--------------------------------
 -->8
--- ship
+-- ship-------------------------
 ship={}
 
 function ship.init(self)
@@ -47,7 +47,7 @@ function ship.init(self)
 	self.w=12 	-- width in pixels
 	self.h=16		-- height in pixels
 	self.sp=1	 -- ship sprite
-end
+end -- ship.init()
 
 function ship.update(self)
 	if btn(0) then
@@ -56,15 +56,17 @@ function ship.update(self)
 		self.x+=1
 	end
 	
+	-- clamp the ship position to
+	-- be within screen bounds
 	self.x=mid(
 		0, 
 		self.x,
-		128-self.w)
-end
+		127-self.w)
+end -- ship.update()
 
 function ship.draw(self)
 	--animate the ship
-	if t%8<5 then
+	if t%8<4 then
 		ship.sp=3
 	else
 		ship.sp=1
@@ -78,32 +80,34 @@ function ship.draw(self)
 		ship.w/8,
 		ship.h/8
 	)
-end
+end -- ship.draw()
+
+--------------------------------
 -->8
---enemies
+--enemies-----------------------
 enemies={
-	rows={},	-- the enemy rows
-	dir=1,			-- movement direction
-	speed=4,	-- move speed
-	y_drop=4,-- drop amount
-	y_off=0,	-- wave y offset
-	anim=0,	 -- anim frame number 
- types={
- 		{sp=64}, -- enemy type 1
- 		{sp=65}, -- enemy type 2
- 		{sp=66}  -- enemy type 1
- 	}
+	rows={}, -- the enemy rows
+	dir=1, -- movement direction
+	speed=4, -- move speed
+	y_drop=4, -- drop amount
+	y_off=0, -- wave y offset
+	anim=0, -- anim frame number 
+	types={
+		{sp=64}, -- enemy type 1
+		{sp=65}, -- enemy type 2
+		{sp=66}  -- enemy type 1
+	}
 }
 
 function enemies.init(self)	
-	local enemy_rows={1,2,2,3,3}
-	for row,etype in pairs(enemy_rows) do
+	local e_setup={1,2,2,3,3}
+	for row,etype in pairs(e_setup) do
 		self.rows[row]={}
 		for i=0,7 do
 			self:add_enemy(row,i,etype)
 		end
 	end
-end
+end -- enemies.init()
 
 function enemies.add_enemy(self,row,col,etype)
 	local e={
@@ -114,7 +118,7 @@ function enemies.add_enemy(self,row,col,etype)
 	}
 	
 	add(self.rows[row],e)
-end
+end -- enemies.add_enemy()
 
 function enemies.update(self)
 	-- move the enemies
@@ -122,9 +126,9 @@ function enemies.update(self)
 		self.anim=self.anim==0 and 1 or 0
 		for row in all(self.rows) do
 			for e in all(row) do
- 			e.x+=self.dir
- 		end
- 	end
+			e.x+=self.dir
+		end
+	end
 
 		-- change dir if necessary
 		for row in all(self.rows) do
@@ -135,20 +139,30 @@ function enemies.update(self)
 			end
 		end
 	end
-end
+end -- enemies.update()
 
 function enemies.draw(self)
-	for row in all(self.rows) do
+	for i,row in pairs(self.rows) do
+		-- pal() swaps palette colors
+		-- for the next thing drawn
+		-- here, we're swapping the
+		-- default white (#7) in the
+		-- enemy sprite for a new one
+		pal(7,6+i)
+
+		-- draw each enemy sprite
 		for enemy in all(row) do
-		pal(7,6+enemy.row)
-		spr(
-			enemy.sp+self.anim*16,
-			enemy.x,
-			enemy.y+self.y_off)
-		pal()
+			spr(
+				enemy.sp+self.anim*16,
+				enemy.x,
+				enemy.y+self.y_off)
 		end
+
+		pal() -- reset the palette
 	end
-end
+end -- enemies.draw()
+
+
 __gfx__
 00000000555555555555000055555555555500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000577777777775000057777777777500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
