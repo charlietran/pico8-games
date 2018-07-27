@@ -1024,7 +1024,8 @@ function cam.init()
 	cam.shake_remaining=0
 	cam.shake_force=0
 
-	cam.threshold=24
+	cam.thresh_x=24
+	cam.thresh_y=24
 end
 
 --update the game camera to
@@ -1037,24 +1038,24 @@ function cam.update(c)
 	-- the left of the player, then
 	-- shift the camera towards the
 	-- player, at most 4 pixels
-	if (c.x+c.threshold)<player.x then
-		c.x+=min(player.x-(c.x+c.threshold),4)
+	if (c.x+c.thresh_x)<player.x then
+		c.x+=min(player.x-(c.x+c.thresh_x),4)
 	end
 	-- and if too far right, then
 	-- shift camera to the left
-	if (c.x-c.threshold)>player.x then
-		c.x-=min((c.x-c.threshold)-player.x,4)
+	if (c.x-c.thresh_x)>player.x then
+		c.x-=min((c.x-c.thresh_x)-player.x,4)
 	end
 	-- same if cam is too far above
 	-- player, shift it downwards
 	-- (positive y means downward)
-	if (c.y+c.threshold)<player.y then
-		c.y+=min(player.y-(c.y+c.threshold),4)
+	if (c.y+c.thresh_y)<player.y then
+		c.y+=min(player.y-(c.y+c.thresh_y),4)
 	end
 	-- and lastly, if too far 
 	-- below player, shift it up
-	if (c.y-c.threshold)>player.y then
-		c.y-=min((c.y-c.threshold)-player.y,4)
+	if (c.y-c.thresh_y)>player.y then
+		c.y-=min((c.y-c.thresh_y)-player.y,4)
 	end
 
 	-- clamp the camera offset to
@@ -1062,6 +1063,7 @@ function cam.update(c)
 	-- 8x4 game map
 	c.x=mid(c.x,64,128*64-64)
 	c.y=mid(c.y,64,32*64-64)
+	--c.y=mid(c.y,64,64)
 end
 
 -- returns coordinates to be
