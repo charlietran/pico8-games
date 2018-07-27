@@ -865,8 +865,8 @@ function bombs.add(b,x,y)
 	bomb.hr=1
 	bomb.x=x
 	bomb.y=y
-	bomb.vx=1*sgn(player.vx)
-	bomb.vy=-2
+	bomb.vx=(0.2+rnd(1.5))*player.facing
+	bomb.vy=-3
 	bomb.anim_timer=0
 	add(b.list,bomb)
 end
