@@ -755,7 +755,7 @@ end
 function grasses.draw(g)
 	for grass_row,grasses in pairs(g.map) do
 		for grass_col,spx in pairs(grasses) do
-			sspr(3*spx,8+2*g.anim,3,2,grass_col,grass_row)
+			sspr(3*spx,8+2*g.anim,3,2,grass_col-1,grass_row)
 		end
 	end
 end
