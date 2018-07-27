@@ -780,11 +780,13 @@ function grasses.plant(x,y)
 	-- return if grass already at x
 	if(grasses.map[y][x]) return false
 
-	local tile=mget(x/8,(y+2)/8)
-
+	local tile1,tile2
+	tile1=mget(x/8,y/8)
+	tile2=mget(x/8,(y+2)/8)
+	
 	-- insert one of four possible
 	-- flower types
-	if iswall(tile) then
+	if iswall(tile2) and not iswall(tile1) then
 		grasses.map[y][x]=flr(rnd(4))
 	end
 end
