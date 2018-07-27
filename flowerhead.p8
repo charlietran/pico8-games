@@ -218,7 +218,7 @@ function player.init()
 	--1 or -1, used when we're 
 	--facing away from a wall
 	--while sliding
-	player.facing=0
+	player.facing=1
 
 	--timers used for animation
 	--states and particle fx
@@ -376,6 +376,7 @@ function player.groundinput(p)
 	-- pressing left
 	if btn(0) then
 		p.flipx=true
+		p.facing=-1
 		--brake if moving in
 		--opposite direction
 		if(p.vx>0) p.vx*=.9
@@ -383,6 +384,7 @@ function player.groundinput(p)
 	--pressing right
 	elseif btn(1) then
 		p.flipx=false
+		p.facing=1
 		if(p.vx<0) p.vx*=.9
 		p.vx+=.2*dt
 	--pressing neither, slow down
