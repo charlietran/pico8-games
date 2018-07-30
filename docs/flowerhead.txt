@@ -1,0 +1,40 @@
+# Flamehead
+What needs to be done to finish this game?
+
+The player should feel like a POWERFUL ACTION GARDENER.
+
+What is the GAME MEANING?
+
+Fill your game with love and tiny details.
+
+* It needs a goal
+* It needs a main loop
+* Needs to feel good
+	* Basic Sounds and Animation
+	* Low Enemy HP
+	* High rate of fire
+	* More enemies
+	* Bigger bullets (player projectiles?)
+	* Muzzle flash (first frame is a circle)
+	* Faster bullets
+	* Less accuracy (slightly messy)
+	* Impact effects
+	* Hit animation (enemy flash)
+	* Knockback
+	* Permanence (enemy bodies, player affects enviro)
+		* enemy death animation 
+		* movie shootout in a bar - every bullet hits a bottle
+	* Camera LERP - sense of motion
+	* Screen shake
+	* Player knockback -- actions cause player to move slightly. give reasons for the player to not press a button
+	* Sleep / hitstop
+	* Gun delay, gun lags slightly behind player. intertia feel
+	* Gun kick
+	* Strafe -- shooting while walking backwards. Maintain direction while firing
+	* More permanence -- shells that stay forever
+	* More bass in sfx
+	* Super machinegun -- more bullets, make the player feel powerful
+	* Random explosions
+	* Faster enemies. More enemies! Higher rate of fire!!
+	* Camera kick -- move camera in the opposite direction of firing
+	* Bigger explosions. More permanence. Explosion smoke.
