@@ -4,11 +4,6 @@ __lua__
 -- f l o w e r h e a d
 -- by charlie tran
 
--- holds all objects that exist
--- in the game loop. each object
--- should have :update and :draw
-objects={}
-
 function _init()
 	-- how many pixels per frame
 	-- should our y velocity
@@ -33,31 +28,46 @@ function _init()
 	-- and then "end"
 	gamestate="intro"
 
-	make_clouds()
-
-	player:init()
-	cam:init()
-	tutorials:init()
-
+	-- holds all objects that exist
+	-- in the game loop. each object
+	-- should have :update and :draw
 	-- set up our objects table
 	-- in draw order
-	objects[1]=grasses
-	objects[2]=player
-	objects[3]=specks
-	objects[4]=bombs
-	objects[5]=explosions
+	objects={
+		clouds,
+		cam,
+		level,
+		tutorials,
+		grasses,
+		player,
+		specks,
+		bombs,
+		explosions
+	}
+
+	for object in all(objects) do
+		if(object.init) object:init()
+	end
 end
 
 function _update60()
 	if gamestate=="game" then
-		for object in all(objects) do
-			cam:update()
-			object:update()
-		end
+		_updategame()
 	elseif gamestate=="intro" then
 		intro:update()
 	elseif gamestate=="outro" then
 		outro:update()
+	end
+end
+
+function _updategame()
+	if player.dying then
+		reset_game()
+	else
+		for object in all(objects) do
+			cam:update()
+			if(object.update) object:update()
+		end
 	end
 end
 
@@ -75,27 +85,21 @@ function _drawgame()
 	-- debug=true
 	if(debug) draw_debug()
 
-	camera(0,0)
-	draw_clouds()
-	camera(cam:position())
-	--draw the map
-	map(0,0,0,0,128,32)
-
-	tutorials:draw()
-
 	for object in all(objects) do
-		object:draw()
+		if(object.draw) object:draw()
 	end
 end
 
-function make_clouds()
-	clouds={}
-	for i=1,30 do
+clouds={}
+clouds.list={}
+
+function clouds:init()
+	for i=1,45 do
 		srand(i)
 		local size=i/3
-		clouds[i]={
-			x=rnd(128)-size,
-			y=rnd(128)-size,
+		self.list[i]={
+			x=rnd(192)-size,
+			y=rnd(192)-size,
 			size=size
 		}
 	end
@@ -103,14 +107,17 @@ function make_clouds()
 	srand(bnot(time()))
 end
 
-function draw_clouds()
+clouds.pattern1=0b1110111110111111
+clouds.pattern2=0b0111111111011111
+function clouds:draw()
  -- cloud checker pattern
 	-- 0 = filled, 1 = empty
 	-- 0100
 	-- 1001
 	-- 0011
 	-- 1110
-	fillp(0b1010010110100101)
+	camera(0,0)
+	-- fillp(0b1010010110100101)
 
 	-- this time factor is used to
 	-- drift the clouds in the 
@@ -122,7 +129,8 @@ function draw_clouds()
 	-- draw the clouds as circles 
 	-- drifting in the x direction 
 	-- over time and with parallax
-	for cloud in all(clouds) do
+	local cloudalt=true
+	for cloud in all(self.list) do
 			local cloudx, cloudy
 			-- the y offset is the
 			-- product of our current cam
@@ -132,13 +140,20 @@ function draw_clouds()
 			-- multiplied the magic .01
 			-- to get the right parallax
 			-- feeling
-			cloudy=cloud.y-(cam.y*cloud.size*.01)%64
+			cloudy=cloud.y-(cam.y*cloud.size*.01)%192
 
 			-- our x offset is the same,
 			-- with our time factor added
 			-- so that the clouds appear
 			-- to drift to the left
-			cloudx=cloud.x-((cam.x+t)*cloud.size*.01)%64
+			cloudx=cloud.x-((cam.x+t)*cloud.size*.01)%192
+
+			cloudalt=not cloudalt
+			if cloudalt then
+				fillp(clouds.pattern1)
+			else
+				fillp(clouds.pattern2)
+			end
 
 			-- draw our circle, with a 
 			-- 128 modulo so that it
@@ -156,6 +171,12 @@ function draw_clouds()
 
 	fillp()
 end
+
+level={}
+function level.draw(self)
+	map(0,0,0,0,128,32)
+end
+
 --------------------------------
 -->8
 --player object-----------------
@@ -171,6 +192,8 @@ function player.init()
 			if mget(i,j)==112 then
 				player.x=i*8
 				player.y=j*8
+				cam.x=player.x
+				cam.y=player.y
 				mset(i,j,0)
 				break
 			end
@@ -1019,70 +1042,74 @@ cam={}
 -- of 0,0 means the camera will
 -- originate (top left corner)
 -- be at top left of the screen
-function cam.init()
-	cam.x=player.x
-	cam.y=player.y
+function cam:init()
+	self.x=0
+	self.y=0
 
-	cam.shake_remaining=0
-	cam.shake_force=0
+	self.shake_remaining=0
+	self.shake_force=0
 
-	cam.thresh_x=24
-	cam.thresh_y=24
+	self.thresh_x=24
+	self.thresh_y=48
 end
 
 --update the game camera to
 --track the player within our
 --specified threshold
-function cam.update(c)
-	c.shake_remaining=max(0,c.shake_remaining-1)
+function cam:update()
+	self.shake_remaining=max(0,self.shake_remaining-1)
 
 	-- if the camera is too far to
 	-- the left of the player, then
 	-- shift the camera towards the
 	-- player, at most 4 pixels
-	if (c.x+c.thresh_x)<player.x then
-		c.x+=min(player.x-(c.x+c.thresh_x),4)
+	if (self.x+self.thresh_x)<player.x then
+		self.x+=min(player.x-(self.x+self.thresh_x),4)
 	end
 	-- and if too far right, then
 	-- shift camera to the left
-	if (c.x-c.thresh_x)>player.x then
-		c.x-=min((c.x-c.thresh_x)-player.x,4)
+	if (self.x-self.thresh_x)>player.x then
+		self.x-=min((self.x-self.thresh_x)-player.x,4)
 	end
 	-- same if cam is too far above
 	-- player, shift it downwards
 	-- (positive y means downward)
-	if (c.y+c.thresh_y)<player.y then
-		c.y+=min(player.y-(c.y+c.thresh_y),4)
+	if (self.y+self.thresh_y)<player.y then
+		self.y+=min(player.y-(self.y+self.thresh_y),4)
 	end
 	-- and lastly, if too far 
 	-- below player, shift it up
-	if (c.y-c.thresh_y)>player.y then
-		c.y-=min((c.y-c.thresh_y)-player.y,4)
+	if (self.y-self.thresh_y)>player.y then
+		self.y-=min((self.y-self.thresh_y)-player.y,4)
 	end
 
 	-- clamp the camera offset to
 	-- be within the bounds of our
 	-- 8x4 game map
-	c.x=mid(c.x,64,128*64-64)
-	c.y=mid(c.y,64,32*64-64)
+	self.x=mid(self.x,64,128*64-64)
+	self.y=mid(self.y,64,32*64-64)
 	--c.y=mid(c.y,64,64)
 end
 
 -- returns coordinates to be
 -- used by pico8 camera() func
-function cam.position(c)
+function cam.position(self)
 	local shake={x=0,y=0}
-	if c.shake_remaining>0 then
-		shake.x=rnd(c.shake_force)-c.shake_force/2
-		shake.y=rnd(c.shake_force)-c.shake_force/2
+	if self.shake_remaining>0 then
+		shake.x=rnd(self.shake_force)-self.shake_force/2
+		shake.y=rnd(self.shake_force)-self.shake_force/2
 	end
-	return c.x-64+shake.x,c.y-64+shake.y
+	return self.x-64+shake.x,self.y-64+shake.y
 	-- return 0,0
 end
 
 function cam.shake(c, ticks, force)
 	c.shake_remaining=ticks
 	c.shake_force=force
+end
+
+function cam:draw()
+	camera(cam:position())
 end
 
 --tutorials---------------------
