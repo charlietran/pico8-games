@@ -249,6 +249,8 @@ function player.init()
 	player.headanimtimer=0
 	player.throwtimer=0
 
+	player.dead=false
+
 	player.spr=64
 	--sprite numbers------
 	--64 standing
@@ -263,81 +265,89 @@ function player.init()
 	--99 sliding 4
 end
 
-function player.draw(p)
-	p.headanimtimer=p.headanimtimer%3+1
+function player:draw()
+	if player.dying then
+		player:draw_death()
+		return
+	end
+
+	self.headanimtimer=self.headanimtimer%3+1
 	
 	--if throwing, draw swoosh
-	if p.throwtimer>0 then
+	if self.throwtimer>0 then
 		local xoff=-4
-		if p.flipx then
+		if self.flipx then
 			xoff=-2
 		end
 		
 		sspr(
 			32,32,7,6,
-			p.x+xoff,
-			p.y-5,
+			self.x+xoff,
+			self.y-5,
 			7,6,
-			p.flipx
+			self.flipx
 		)
-		p.throwtimer-=1
+		self.throwtimer-=1
 	end
 
-	if p.standing then
-		if p.landtimer>0 then
+	if self.standing then
+		if self.landtimer>0 then
 		-- if just landed, show crouch
-			p.spr=67
+			self.spr=67
 		else
 		-- if running, show
 		-- alternating frames of
 		-- the running anim
-			p.spr=64+p.runtimer%3
+			self.spr=64+self.runtimer%3
 		end
-	elseif p.wallsliding	then
-		p.spr=96+flr(player.runtimer%4)
+	elseif self.wallsliding	then
+		self.spr=96+flr(player.runtimer%4)
 	else
-		if p.vy<0 then
-			p.spr=80 -- jumping up
+		if self.vy<0 then
+			self.spr=80 -- jumping up
 		else
-		 p.spr=81 -- falling down
+		 self.spr=81 -- falling down
 		end
 	end
 
 	-- draw the player sprite
 	spr(
-		p.spr,   -- sprite
-		p.x-p.wr,-- x pos
-		p.y-p.hr,-- y pos
+		self.spr,   -- sprite
+		self.x-self.wr,-- x pos
+		self.y-self.hr,-- y pos
 		0.375,   -- width .375*8=3px
 		0.625,   -- height.625*8=5px
-		p.flipx  -- flip x
+		self.flipx  -- flip x
 	)
 end
 
-function player.update(p)
-	p.standing=p.falltimer<7
-	p.moving=nil
-	--move the player, x then y
-	p:handleinput()
-	p:movex()
-	p:movey()
-	p:movejump()
-	p:checksliding()
-	p:effects()
+function player:draw_death()
 end
 
-function player.checksliding(p)
-	p.wallsliding=false
+function player:update()
+	self.standing=self.falltimer<7
+	self.moving=nil
+	--move the player, x then y
+	self:handleinput()
+	self:movex()
+	self:movey()
+	self:movejump()
+	self:checksliding()
+	self:effects()
+end
+
+function player:checksliding()
+	self.wallsliding=false
 	--hanging on wall to the right?
-	if collide(p,'x',1) then
-		p.wallsliding=true
-		p.facing=-1
-		if(p.vy>0) p.vy*=.97
+	if collide(self,'x',1) then
+		self.wallsliding=true
+		self.facing=-1
+		if(self.vy>0) self.vy*=.97
 	--hanging on wall to the left?
-	elseif collide(p,'x',-1) then
-		p.wallsliding=true
-		p.facing=1
-		if(p.vy>0) p.vy*=.97
+	elseif collide(self,'x',-1) then
+		self.wallsliding=true
+		self.facing=1
+		if(self.vy>0) self.vy*=.97
 	end
 end
 
@@ -630,6 +640,12 @@ function spawnp(x,y,vx,vy,jitter,c,d)
 
 	add(specks,s)
 end
+
+function player:die()
+	self.dying=true
+	self.dying_timer=0
+end
+
 --------------------------------
 -->8
 --collision code----------------
@@ -699,6 +715,11 @@ function collide(p,a,d,nearonly)
 	local tile1=mget(x1/8,y1/8)
 	local tile2=mget(x2/8,y2/8)
 
+
+if is_spike(tile1) or is_spike(tile2) then
+	p:die()
+end
+
 	-- "nearonly" indicates we only
 	-- want to know if our near
 	-- corner will be in a wall
@@ -723,6 +744,10 @@ function iswall(tile)
  --we know our tile sprites
  --our stored in slots 1-7
  return tile>=1 and tile<=7
+end
+
+function is_spike(tile)
+	return tile==48
 end
 
 --------------------------------
@@ -824,28 +849,35 @@ bombs.list={}
 
 function bombs.draw(b)
 	for bomb in all(b.list) do
-		if not bomb.exploded then
-			local anim_frame=flr(bomb.anim_timer/3)
-			local sx,sy
-			if anim_frame<3 then
-				sx=16+3*anim_frame
-				sy=8
-			elseif anim_frame<6 then
-				sx=16+3*(anim_frame-3)
-				sy=11
-			else
-				sx=16+3*(anim_frame-6)
-				sy=14
-			end
-			sspr(sx,sy,3,3,bomb.x-1,bomb.y-1)
+		if bomb.dead or bomb.exploded then 
+			goto bomb_draw_continue
 		end
+
+		local anim_frame=flr(bomb.anim_timer/3)
+		local sx,sy
+		if anim_frame<3 then
+			sx=16+3*anim_frame
+			sy=8
+		elseif anim_frame<6 then
+			sx=16+3*(anim_frame-3)
+			sy=11
+		else
+			sx=16+3*(anim_frame-6)
+			sy=14
+		end
+		sspr(sx,sy,3,3,bomb.x-1,bomb.y-1)
+
+		::bomb_draw_continue::
 	end
 end
 
 function bombs.update(b)
 	for bomb in all(b.list) do
+
 		if bomb.exploded then
 			bombs.exploding(bomb)
+		elseif bomb.dead then
+			del(bombs.list,bomb)
 		else
 			bomb.anim_timer+=1
 			if bomb.anim_timer>23 then
@@ -891,12 +923,15 @@ function bombs.add(b,x,y)
 	bomb.vx=(0.2+rnd(1.5))*player.facing
 	bomb.vy=-3
 	bomb.anim_timer=0
+	bomb.die=function(self) 
+		self.dead=true 
+	end
 	add(b.list,bomb)
 end
 
 function bombs.explode(bomb)
 	explosions.add(bomb.x,bomb.y,6)
-	for i=bomb.x+2,bomb.x-2,-1 do
+	for i=bomb.x+9,bomb.x-9,-1 do
 		grasses.plant(i,bomb.y)
 	end
 	bomb.exploded=1
