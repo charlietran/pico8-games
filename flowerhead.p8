@@ -638,7 +638,7 @@ function spawnp(x,y,vx,vy,jitter,c,d)
 	s.duration=s.d+rnd(s.d)
 	s.life=1
 
-	add(specks,s)
+	add(specks.list,s)
 end
 
 function player:die()
@@ -756,9 +756,9 @@ end
 
 --specks holds all particles to
 --be drawn in our object loop
-specks={}
-function specks.update(this)
-	for speck in all(this) do
+specks={list={}}
+function specks:update()
+	for speck in all(self.list) do
 		speck.ox=speck.x
 		speck.oy=speck.y
 		speck.x+=speck.vx
@@ -770,13 +770,13 @@ function specks.update(this)
 		if speck.life<0 or
 			iswall(mget(speck.x/8,speck.y/8))
 		then
-			del(this, speck)
+			del(self.list,speck)
 		end
 	end 
 end
 
-function specks.draw(this)
-	for speck in all(this) do
+function specks:draw()
+	for speck in all(self.list) do
 		line(
 			speck.x,
 			speck.y,
@@ -786,7 +786,6 @@ function specks.draw(this)
 		)
 	end
 end
-
 
 --------------------------------
 -->8
