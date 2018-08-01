@@ -36,7 +36,7 @@ function _init()
 	objects={
 		clouds,
 		cam,
-		level,
+		levels,
 		tutorials,
 		grasses,
 		player,
@@ -172,8 +172,67 @@ function clouds:draw()
 	fillp()
 end
 
-level={}
-function level.draw(self)
+
+levels={list={}}
+
+-- find each level block, add
+-- it to the list with coords
+function levels:init()
+	-- tile 6 is bottom right
+	-- tile 7 is bottom left
+	-- tile 8 is the top left
+	-- tile 9 is top right
+	for i=0,127 do
+		for j=0,31 do
+			if mget(i,j)==8 then
+				levels:add(i,j)
+			end -- if mget(i,j)
+		end -- for j=0,31
+	end -- for i=0,127
+	levels.current=levels.list[1]
+end -- levels:init
+
+function levels:add(m_x1,m_y1)
+	local lvl={x1=m_x1*8,y1=m_y1*8}
+	for m_x2=m_x1,127 do
+		if mget(m_x2,m_y1)==9 then
+			lvl.x2=m_x2*8
+			break
+		end
+	end
+	for m_y2=m_y1,31 do
+		if mget(m_x1,m_y2)==7 then
+			lvl.y2=m_y2*8
+			break
+		end
+	end
+	levels:set_spawn(lvl)
+	add(self.list,lvl)
+	printh("level added:")
+	printh("x1: "..lvl.x1)
+	printh("y1: "..lvl.y1)
+	printh("x2: "..lvl.x2)
+	printh("y2: "..lvl.y2)
+	printh("spawn x: "..lvl.spawnx)
+	printh("spawn x: "..lvl.spawny)
+end
+
+function levels:set_spawn(lvl)
+	-- find start sprite (#64) and
+	-- set initial x/y position
+	for i=lvl.x1/8,lvl.x2/8 do
+		for j=lvl.y1/8,lvl.y2/8 do
+			if mget(i,j)==64 then
+				lvl.spawnx=i*8+3
+				lvl.spawny=j*8
+				mset(i,j,0)
+				break
+			end
+		end
+		if(player.x) break
+	end
+end
+function levels.draw(self)
 	map(0,0,0,0,128,32)
 end
 
@@ -183,24 +242,6 @@ end
 player={}
 
 function player.init()
-	--player attributes-----
-
-	-- find start sprite (#112) and
-	-- set initial x/y position
-	for i=0,127 do
-		for j=0,31 do
-			if mget(i,j)==112 then
-				player.x=i*8
-				player.y=j*8
-				cam.x=player.x
-				cam.y=player.y
-				mset(i,j,0)
-				break
-			end
-		end
-		if(player.x) break
-	end
-
 	-- velocity
 	player.vx=0
 	player.vy=0
@@ -263,6 +304,14 @@ function player.init()
 	--97 sliding 2
 	--98 sliding 3 / hanging
 	--99 sliding 4
+
+	player.x=levels.current.spawnx
+	player.y=levels.current.spawny
+	printh("--player init--")
+	printh("player.x: "..player.x)
+	printh("player.y: "..player.y)
+	printh("cam.x: "..cam.x)
+	printh("cam.y: "..cam.y)
 end
 
 function player:draw()
