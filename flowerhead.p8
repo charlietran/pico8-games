@@ -27,6 +27,7 @@ function _init()
 	-- and then move into "game"
 	-- and then "end"
 	gamestate="intro"
+	intro:init()
 
 	-- holds all objects that exist
 	-- in the game loop. each object
@@ -1113,6 +1114,11 @@ end
 intro={}
 intro.a=0
 intro.r=2
+
+function intro:init()
+	music(1)
+end
+
 function intro:draw()
 
 	-- print "press x to start"
