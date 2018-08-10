@@ -1190,7 +1190,7 @@ function cam:init()
 	self.shake_force=0
 
 	self.thresh_x=24
-	self.thresh_y=48
+	self.thresh_y=24
 
 	self.fadeout=0
 end
