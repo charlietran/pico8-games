@@ -70,10 +70,15 @@ function _updategame()
 			player.dying_timer-=1
 			printh(player.dying_timer)
 		end
-	else
+	else -- normal game loop
+		gametime+=1
 		for object in all(objects) do
 			cam:update()
 			if(object.update) object:update()
+		end
+
+		if levels.current.planted/levels.current.plantable > 0.99 then
+			gamestate="outro"
 		end
 	end
 end
@@ -85,6 +90,8 @@ function _draw()
 		_drawgame()
 	elseif gamestate=="intro" then
 		intro:draw()
+	elseif gamestate=="outro" then
+		outro:draw()
 	end
 end
 
@@ -129,6 +136,8 @@ function reset_game()
 	grasses.map={}
 	levels.current.percent_complete=0
 	levels.current.planted=0
+	gametime=0
+
 	for g in all(grasses.map) do
 		del(grasses.map,g)
 	end
@@ -1338,6 +1347,26 @@ function tutorials.draw(t)
 			end
 		end
 	end
+end
+
+outro={}
+function outro:init()
+end
+
+function outro:update()
+	if btnp(4) then
+		gamestate="intro"
+	end
+end
+
+function outro:draw()
+	cls()
+	music(-1,50)
+	camera(0,0)
+	print("you planted all the flowers!!", 16, 54, 7)
+	print("your time: "..round(gametime/60,2).." seconds", 24, 62, 7)
+	print("press z to restart", 32, 70, 7)
+
 end
 
 __gfx__
