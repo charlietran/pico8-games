@@ -96,6 +96,11 @@ function _drawgame()
 		if(object.draw) object:draw()
 	end
 
+	-- rectfill(cam.x-61, cam.y-64, cam.x-44,cam.y-59, 11)
+
+	local percent=(levels.current.planted / levels.current.plantable)*100
+	print(round(percent,2).."%",cam.x-60,cam.y-64,11)
+
 	if cam.fadeout>0 then
 		for i=0,15 do
 			pal(i,i*(1-cam.fadeout),1)
@@ -107,6 +112,14 @@ function _drawgame()
 
 end
 
+function round(num, numdecimalplaces)
+  if numdecimalplaces and numdecimalplaces>0 then
+    local mult = 10^numdecimalplaces
+    return flr(num * mult + 0.5) / mult
+  end
+  return flr(num + 0.5)
+end
+
 clouds={}
 clouds.list={}
 
@@ -114,6 +127,8 @@ function reset_game()
 	player:init()
 	cam.fadeout=1
 	grasses.map={}
+	levels.current.percent_complete=0
+	levels.current.planted=0
 	for g in all(grasses.map) do
 		del(grasses.map,g)
 	end
@@ -227,6 +242,8 @@ end -- levels:init
 
 function levels:add(m_x1,m_y1)
 	local lvl={x1=m_x1*8,y1=m_y1*8}
+
+	-- determine the boundaries of the level
 	for m_x2=m_x1,127 do
 		if mget(m_x2,m_y1)==9 then
 			lvl.x2=m_x2*8
@@ -239,7 +256,24 @@ function levels:add(m_x1,m_y1)
 			break
 		end
 	end
+
+-- determine the number of plantable blocks
+lvl.plantable=0
+lvl.planted=0
+for y=m_y1,lvl.y2/8 do
+	for x=m_x1,lvl.x2/8 do
+		local t=mget(x,y)
+		local at=mget(x,y-1)
+		if t==1 or t==3 then
+			if not iswall(at) and not is_spike(at) then
+				lvl.plantable+=8
+			end
+		end
+	end
+end
+
 	levels:set_spawn(lvl)
+	lvl.percent_complete=0
 	add(self.list,lvl)
 	printh("level added:")
 	printh("x1: "..lvl.x1)
@@ -932,7 +966,8 @@ function grasses.plant(x,y)
 	
 	-- insert one of four possible
 	-- flower types
-	if iswall(tile2) and not iswall(tile1) then
+	if iswall(tile2) and tile1~=48 and not iswall(tile1) then
+		levels.current.planted+=1
 		grasses.map[y][x]=flr(rnd(4))
 	end
 end
