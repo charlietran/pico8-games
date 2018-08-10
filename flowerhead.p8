@@ -962,6 +962,8 @@ function grasses.draw(g)
 end
 
 function grasses.plant(x,y)
+	local x=flr(x)
+	local y=flr(y)
 	-- start a new grass map row
 	-- if necessary
 	grasses.map[y]=grasses.map[y] or {}
